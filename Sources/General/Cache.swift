@@ -27,32 +27,30 @@
 import Foundation
 
 public class Cache {
-
     private let ioQueue: DispatchQueue
-    
+
     private var debouncer: Debouncer
-    
+
     public let downloadPath: String
 
     public let downloadTmpPath: String
-    
+
     public let downloadFilePath: String
-    
+
     public let identifier: String
-        
+
     private let fileManager = FileManager.default
-    
+
     private let encoder = PropertyListEncoder()
-    
+
     internal weak var manager: SessionManager?
-    
+
     private let decoder = PropertyListDecoder()
-    
+
     public static func defaultDiskCachePathClosure(_ cacheName: String) -> String {
         let dstPath = NSSearchPathForDirectoriesInDomains(.cachesDirectory, .userDomainMask, true).first!
         return (dstPath as NSString).appendingPathComponent(cacheName)
     }
-    
 
     /// 初始化方法
     /// - Parameters:
@@ -62,60 +60,58 @@ public class Cache {
     ///   - downloadFilePath: 存放下载完成后的文件
     public init(_ identifier: String, downloadPath: String? = nil, downloadTmpPath: String? = nil, downloadFilePath: String? = nil) {
         self.identifier = identifier
-        
+
         let ioQueueName = "com.Tiercel.Cache.ioQueue.\(identifier)"
         ioQueue = DispatchQueue(label: ioQueueName, autoreleaseFrequency: .workItem)
-        
+
         debouncer = Debouncer(queue: ioQueue)
-        
+
         let cacheName = "com.Daniels.Tiercel.Cache.\(identifier)"
-        
+
         let diskCachePath = Cache.defaultDiskCachePathClosure(cacheName)
-                
+
         let path = downloadPath ?? (diskCachePath as NSString).appendingPathComponent("Downloads")
-                
+
         self.downloadPath = path
 
         self.downloadTmpPath = downloadTmpPath ?? (path as NSString).appendingPathComponent("Tmp")
-        
+
         self.downloadFilePath = downloadFilePath ?? (path as NSString).appendingPathComponent("File")
-        
+
         createDirectory()
 
         decoder.userInfo[.cache] = self
-        
     }
-    
+
     public func invalidate() {
         decoder.userInfo[.cache] = nil
     }
 }
 
-
 // MARK: - file
+
 extension Cache {
     internal func createDirectory() {
-        
         if !fileManager.fileExists(atPath: downloadPath) {
             do {
                 try fileManager.createDirectory(atPath: downloadPath, withIntermediateDirectories: true, attributes: nil)
-            } catch  {
+            } catch {
                 manager?.log(.error("create directory failed",
                                     error: TiercelError.cacheError(reason: .cannotCreateDirectory(path: downloadPath,
                                                                                                   error: error))))
             }
         }
-        
+
         if !fileManager.fileExists(atPath: downloadTmpPath) {
             do {
                 try fileManager.createDirectory(atPath: downloadTmpPath, withIntermediateDirectories: true, attributes: nil)
-            } catch  {
+            } catch {
                 manager?.log(.error("create directory failed",
                                     error: TiercelError.cacheError(reason: .cannotCreateDirectory(path: downloadTmpPath,
                                                                                                   error: error))))
             }
         }
-        
+
         if !fileManager.fileExists(atPath: downloadFilePath) {
             do {
                 try fileManager.createDirectory(atPath: downloadFilePath, withIntermediateDirectories: true, attributes: nil)
@@ -126,8 +122,7 @@ extension Cache {
             }
         }
     }
-    
-    
+
     public func filePath(fileName: String) -> String? {
         if fileName.isEmpty {
             return nil
@@ -135,17 +130,17 @@ extension Cache {
         let path = (downloadFilePath as NSString).appendingPathComponent(fileName)
         return path
     }
-    
+
     public func fileURL(fileName: String) -> URL? {
         guard let path = filePath(fileName: fileName) else { return nil }
         return URL(fileURLWithPath: path)
     }
-    
+
     public func fileExists(fileName: String) -> Bool {
         guard let path = filePath(fileName: fileName) else { return false }
         return fileManager.fileExists(atPath: path)
     }
-    
+
     public func filePath(url: URLConvertible) -> String? {
         do {
             let validURL = try url.asURL()
@@ -155,19 +150,17 @@ extension Cache {
             return nil
         }
     }
-    
+
     public func fileURL(url: URLConvertible) -> URL? {
         guard let path = filePath(url: url) else { return nil }
         return URL(fileURLWithPath: path)
     }
-    
+
     public func fileExists(url: URLConvertible) -> Bool {
         guard let path = filePath(url: url) else { return false }
         return fileManager.fileExists(atPath: path)
     }
-    
-    
-    
+
     public func clearDiskCache(onMainQueue: Bool = true, handler: Handler<Cache>? = nil) {
         ioQueue.async {
             guard self.fileManager.fileExists(atPath: self.downloadPath) else { return }
@@ -175,7 +168,7 @@ extension Cache {
                 try self.fileManager.removeItem(atPath: self.downloadPath)
             } catch {
                 self.manager?.log(.error("clear disk cache failed",
-                                    error: TiercelError.cacheError(reason: .cannotRemoveItem(path: self.downloadPath,
+                                         error: TiercelError.cacheError(reason: .cannotRemoveItem(path: self.downloadPath,
                                                                                                   error: error))))
             }
             self.createDirectory()
@@ -186,8 +179,8 @@ extension Cache {
     }
 }
 
-
 // MARK: - retrieve
+
 extension Cache {
     internal func retrieveAllTasks() -> [DownloadTask] {
         return ioQueue.sync {
@@ -197,9 +190,9 @@ extension Cache {
                     let url = URL(fileURLWithPath: path)
                     let data = try Data(contentsOf: url)
                     let tasks = try decoder.decode([DownloadTask].self, from: data)
-                    tasks.forEach { (task) in
+                    tasks.forEach { task in
                         task.cache = self
-                        if task.status == .waiting  {
+                        if task.status == .waiting {
                             task.protectedState.write { $0.status = .suspended }
                         }
                     }
@@ -209,7 +202,7 @@ extension Cache {
                     return [DownloadTask]()
                 }
             } else {
-               return  [DownloadTask]()
+                return [DownloadTask]()
             }
         }
     }
@@ -222,7 +215,7 @@ extension Cache {
             let backupFileExists = fileManager.fileExists(atPath: backupFilePath)
             let originFileExists = fileManager.fileExists(atPath: originFilePath)
             guard backupFileExists || originFileExists else { return false }
-            
+
             if originFileExists {
                 do {
                     try fileManager.removeItem(atPath: backupFilePath)
@@ -243,14 +236,11 @@ extension Cache {
             }
             return true
         }
- 
     }
-
-
 }
 
-
 // MARK: - store
+
 extension Cache {
     internal func storeTasks(_ tasks: [DownloadTask]) {
         debouncer.execute(label: "storeTasks", wallDeadline: .now() + 0.2) {
@@ -268,7 +258,7 @@ extension Cache {
             try? self.fileManager.removeItem(atPath: path)
         }
     }
-    
+
     internal func storeFile(at srcURL: URL, to dstURL: URL) {
         ioQueue.sync {
             do {
@@ -281,7 +271,7 @@ extension Cache {
             }
         }
     }
-    
+
     internal func storeTmpFile(_ tmpFileName: String?) {
         ioQueue.sync {
             guard let tmpFileName = tmpFileName, !tmpFileName.isEmpty else { return }
@@ -308,7 +298,7 @@ extension Cache {
             }
         }
     }
-    
+
     internal func updateFileName(_ filePath: String, _ newFileName: String) {
         ioQueue.sync {
             if fileManager.fileExists(atPath: filePath) {
@@ -319,24 +309,24 @@ extension Cache {
                     self.manager?.log(.error("update fileName failed",
                                              error: TiercelError.cacheError(reason: .cannotMoveItem(atPath: filePath,
                                                                                                     toPath: newFilePath,
-                                                                                                      error: error))))
+                                                                                                    error: error))))
                 }
             }
         }
     }
 }
 
-
 // MARK: - remove
+
 extension Cache {
     internal func remove(_ task: DownloadTask, completely: Bool) {
         removeTmpFile(task.tmpFileName)
-        
+
         if completely {
             removeFile(task.filePath)
         }
     }
-    
+
     internal func removeFile(_ filePath: String) {
         ioQueue.async {
             if self.fileManager.fileExists(atPath: filePath) {
@@ -350,9 +340,7 @@ extension Cache {
             }
         }
     }
-    
 
-    
     /// 删除保留在本地的缓存文件
     ///
     /// - Parameter task:
@@ -361,7 +349,7 @@ extension Cache {
             guard let tmpFileName = tmpFileName, !tmpFileName.isEmpty else { return }
             let path1 = (self.downloadTmpPath as NSString).appendingPathComponent(tmpFileName)
             let path2 = (NSTemporaryDirectory() as NSString).appendingPathComponent(tmpFileName)
-            [path1, path2].forEach { (path) in
+            [path1, path2].forEach { path in
                 if self.fileManager.fileExists(atPath: path) {
                     do {
                         try self.fileManager.removeItem(atPath: path)
@@ -372,7 +360,6 @@ extension Cache {
                     }
                 }
             }
-
         }
     }
 }

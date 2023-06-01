@@ -26,7 +26,6 @@
 
 import Foundation
 
-
 public enum LogOption {
     case `default`
     case none
@@ -40,18 +39,17 @@ public enum LogType {
 
 public protocol Logable {
     var identifier: String { get }
-    
+
     var option: LogOption { get set }
-    
+
     func log(_ type: LogType)
 }
 
 public struct Logger: Logable {
-    
     public let identifier: String
-    
+
     public var option: LogOption
-    
+
     public func log(_ type: LogType) {
         guard option == .default else { return }
         var strings = ["************************ TiercelLog ************************"]
@@ -95,17 +93,11 @@ public struct TiercelWrapper<Base> {
     }
 }
 
-
 public protocol TiercelCompatible {
-
 }
 
 extension TiercelCompatible {
-    public var tr: TiercelWrapper<Self> {
-        get { TiercelWrapper(self) }
-    }
-    public static var tr: TiercelWrapper<Self>.Type {
-        get { TiercelWrapper<Self>.self }
-    }
-}
+    public var tr: TiercelWrapper<Self> { TiercelWrapper(self) }
 
+    public static var tr: TiercelWrapper<Self>.Type { TiercelWrapper<Self>.self }
+}

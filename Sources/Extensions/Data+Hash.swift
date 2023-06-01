@@ -24,41 +24,52 @@
 //  THE SOFTWARE.
 //
 
-import Foundation
 import CommonCrypto
+import CryptoKit
+import Foundation
 
 extension Data: TiercelCompatible { }
+
+protocol DigestData {
+}
+
+protocol HashDigest: HashFunction {
+    func finalize() -> Digest
+}
+
+extension Insecure.MD5: HashDigest {
+}
+
+extension Insecure.SHA1: HashDigest {
+}
+
+extension SHA256: HashDigest {
+}
+
+extension SHA512: HashDigest {
+}
+
 extension TiercelWrapper where Base == Data {
+    @inline(__always)
+    private func hashBase(_ hasher: any HashDigest) -> String {
+        var hasher = hasher
+        hasher.update(data: base)
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
     public var md5: String {
-        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
-        _ = base.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
-            return CC_MD5(bytes.baseAddress, CC_LONG(base.count), &digest)
-        }
-        return digest.map { String(format: "%02x", $0) }.joined()
+        return hashBase(Insecure.MD5())
     }
-    
+
     public var sha1: String {
-        var digest = [UInt8](repeating: 0, count: Int(CC_SHA1_DIGEST_LENGTH))
-        _ = base.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
-            return CC_SHA1(bytes.baseAddress, CC_LONG(base.count), &digest)
-        }
-        return digest.map { String(format: "%02x", $0) }.joined()
+        return hashBase(Insecure.SHA1())
     }
-    
+
     public var sha256: String {
-        var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
-        _ = base.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
-            return CC_SHA256(bytes.baseAddress, CC_LONG(base.count), &digest)
-        }
-        return digest.map { String(format: "%02x", $0) }.joined()
+        return hashBase(SHA256())
     }
-    
+
     public var sha512: String {
-        var digest = [UInt8](repeating: 0, count: Int(CC_SHA512_DIGEST_LENGTH))
-        _ = base.withUnsafeBytes { (bytes: UnsafeRawBufferPointer) in
-            return CC_SHA512(bytes.baseAddress, CC_LONG(base.count), &digest)
-        }
-        return digest.map { String(format: "%02x", $0) }.joined()
+        return hashBase(SHA512())
     }
-    
 }

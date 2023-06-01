@@ -26,31 +26,28 @@
 
 import Foundation
 
-
 public enum FileChecksumHelper {
-    
-    public enum VerificationType : Int {
+    public enum VerificationType: Int {
         case md5
         case sha1
         case sha256
         case sha512
     }
-    
+
     public enum FileVerificationError: Error {
         case codeEmpty
         case codeMismatch(code: String)
         case fileDoesnotExist(path: String)
         case readDataFailed(path: String)
     }
-    
+
     private static let ioQueue: DispatchQueue = DispatchQueue(label: "com.Tiercel.FileChecksumHelper.ioQueue",
                                                               attributes: .concurrent)
-    
-    
+
     public static func validateFile(_ filePath: String,
-                                   code: String,
-                                   type: VerificationType,
-                                   completion: @escaping (Result<Bool, FileVerificationError>) -> ()) {
+                                    code: String,
+                                    type: VerificationType,
+                                    completion: @escaping (Result<Bool, FileVerificationError>) -> Void) {
         if code.isEmpty {
             completion(.failure(FileVerificationError.codeEmpty))
             return
@@ -88,8 +85,6 @@ public enum FileChecksumHelper {
     }
 }
 
-
-
 extension FileChecksumHelper.FileVerificationError: LocalizedError {
     public var errorDescription: String? {
         switch self {
@@ -103,7 +98,4 @@ extension FileChecksumHelper.FileVerificationError: LocalizedError {
             return "read data failed, path: \(path)"
         }
     }
-
 }
-
-

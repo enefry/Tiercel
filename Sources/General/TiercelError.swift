@@ -27,7 +27,6 @@
 import Foundation
 
 public enum TiercelError: Error {
-        
     public enum CacheErrorReason {
         case cannotCreateDirectory(path: String, error: Error)
         case cannotRemoveItem(path: String, error: Error)
@@ -38,7 +37,7 @@ public enum TiercelError: Error {
         case fileDoesnotExist(path: String)
         case readDataFailed(path: String)
     }
-    
+
     case unknown
     case invalidURL(url: URLConvertible)
     case duplicateURL(url: URLConvertible)
@@ -76,7 +75,6 @@ extension TiercelError: LocalizedError {
 }
 
 extension TiercelError: CustomNSError {
-    
     public static let errorDomain: String = "com.Daniels.Tiercel.Error"
 
     public var errorCode: Int {
@@ -93,12 +91,10 @@ extension TiercelError: CustomNSError {
         } else {
             return [String: Any]()
         }
-        
     }
 }
 
 extension TiercelError.CacheErrorReason {
-    
     public var errorDescription: String? {
         switch self {
         case let .cannotCreateDirectory(path, error):
@@ -119,9 +115,4 @@ extension TiercelError.CacheErrorReason {
             return "read data failed, path: \(path)"
         }
     }
-
-    
 }
-
-
-

@@ -26,34 +26,26 @@
 
 import Foundation
 
-
 extension String: TiercelCompatible { }
 extension TiercelWrapper where Base == String {
+    @inline(__always)
+    private var dataWrapper: TiercelWrapper<Data>? {
+        base.data(using: .utf8)?.tr
+    }
+
     public var md5: String {
-        guard let data = base.data(using: .utf8) else {
-            return base
-        }
-        return data.tr.md5
+        dataWrapper?.md5 ?? base
     }
-    
+
     public var sha1: String {
-        guard let data = base.data(using: .utf8) else {
-            return base
-        }
-        return data.tr.sha1
+        dataWrapper?.sha1 ?? base
     }
-    
+
     public var sha256: String {
-        guard let data = base.data(using: .utf8) else {
-            return base
-        }
-        return data.tr.sha256
+        dataWrapper?.sha256 ?? base
     }
-    
+
     public var sha512: String {
-        guard let data = base.data(using: .utf8) else {
-            return base
-        }
-        return data.tr.sha512
+        dataWrapper?.sha512 ?? base
     }
 }

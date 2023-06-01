@@ -29,7 +29,7 @@ import Foundation
 public struct SessionConfiguration {
     // 请求超时时间
     public var timeoutIntervalForRequest: TimeInterval = 60.0
-    
+
     private static var MaxConcurrentTasksLimit: Int = {
         if #available(iOS 11.0, *) {
             return 6
@@ -47,9 +47,8 @@ public struct SessionConfiguration {
             _maxConcurrentTasksLimit = max(limit, 1)
         }
     }
-        
-    public var allowsExpensiveNetworkAccess: Bool = true
 
+    public var allowsExpensiveNetworkAccess: Bool = true
 
     public var allowsConstrainedNetworkAccess: Bool = true
 
@@ -57,8 +56,5 @@ public struct SessionConfiguration {
     public var allowsCellularAccess: Bool = false
 
     public init() {
-
     }
 }
-
-

@@ -26,7 +26,7 @@
 
 import Foundation
 
-public typealias Handler<T> = (T) -> ()
+public typealias Handler<T> = (T) -> Void
 
 public class Executer<T> {
     private let onMainQueue: Bool
@@ -36,7 +36,6 @@ public class Executer<T> {
         self.onMainQueue = onMainQueue
         self.handler = handler
     }
-    
 
     public func execute(_ object: T) {
         if let handler = handler {
